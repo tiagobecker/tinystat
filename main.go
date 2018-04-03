@@ -42,8 +42,8 @@ func main() {
 	// Bind all handlers to the router
 	l.Info("Binding API endpoints to the router")
 	e.GET("/app/create/:name", s.CreateApp)
-	e.GET("/action/:app_id/create", s.CreateAction)
-	e.GET("/action/:app_id/count/:duration", s.GetActionCount)
+	e.GET("/app/:app_id/action/:action/create", s.CountAction)
+	e.GET("/app/:app_id/action/:action/count/:duration", s.GetActionCount)
 
 	// Bind the handlers and listen for requests
 	l.Info("Listening for requests")

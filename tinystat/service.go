@@ -52,7 +52,7 @@ func (s *Service) validateToken(appID, token string) bool {
 
 	// Attempt to retrieve the app from the DB if it's not in cache
 	var app App
-	if err := s.db.Where(&App{AppID: appID}).Find(&app).Error; err != nil {
+	if err := s.db.Where(&App{ID: appID}).Find(&app).Error; err != nil {
 		l.WithError(err).Error("Failed to retrieve App from DB")
 		return false
 	}
