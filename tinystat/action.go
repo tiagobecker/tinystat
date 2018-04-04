@@ -40,6 +40,12 @@ func (s *Service) CreateAction(c echo.Context) error {
 	l := s.logger.WithField("method", "create_action")
 	l.Debug("Received new CreateAction request")
 
+	// Check rate limit
+	l.Debug("Checking rate limit")
+	if s.rateLimit(c.RealIP()) {
+		return ErrRateLimitExceeded
+	}
+
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
@@ -82,6 +88,12 @@ func (s *Service) CreateAction(c echo.Context) error {
 func (s *Service) GetActionCount(c echo.Context) error {
 	l := s.logger.WithField("method", "get_action_count")
 	l.Debug("Received new GetActionCount request")
+
+	// Check rate limit
+	l.Debug("Checking rate limit")
+	if s.rateLimit(c.RealIP()) {
+		return ErrRateLimitExceeded
+	}
 
 	// Decode the request variables
 	appID := c.Param("app_id")
@@ -136,6 +148,12 @@ type ActionSummary struct {
 func (s *Service) GetActionSummary(c echo.Context) error {
 	l := s.logger.WithField("method", "get_action_summary")
 	l.Debug("Received new GetActionSummary request")
+
+	// Check rate limit
+	l.Debug("Checking rate limit")
+	if s.rateLimit(c.RealIP()) {
+		return ErrRateLimitExceeded
+	}
 
 	// Decode the request variables
 	appID := c.Param("app_id")

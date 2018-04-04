@@ -16,6 +16,8 @@ const (
 	baseURL = "https://tinystat.io"
 	// timeout is the default timeout that will be set on the http.Client
 	timeout = time.Duration(time.Second * 5)
+	// sendFreq is the frequency of at which counts will be submitted
+	sendFreq = time.Duration(time.Second * 10)
 )
 
 var (
@@ -40,14 +42,14 @@ type ActionMap struct {
 }
 
 // New generates a new Tinystat client
-func New(appID, token string, sendFreq time.Duration) *Client {
+func New(appID, token string) *Client {
 	c := &Client{
 		client:    &http.Client{Timeout: timeout},
 		actionMap: &ActionMap{actions: make(map[string]int64)},
 		appID:     appID,
 		token:     token,
 	}
-	go c.sendWorker(sendFreq)
+	go c.sendWorker()
 	return c
 }
 
@@ -72,7 +74,7 @@ func (c *Client) GetActionCount(action, duration string) (int64, error) {
 
 // sendWorker periodically sends new actions to the Tinystat API
 // It is done this way to prevent overwhelming the server
-func (c *Client) sendWorker(sendFreq time.Duration) {
+func (c *Client) sendWorker() {
 	for {
 		time.Sleep(sendFreq)
 		c.actionMap.Lock()

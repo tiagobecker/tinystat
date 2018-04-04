@@ -35,6 +35,12 @@ func (s *Service) CreateApp(c echo.Context) error {
 	l := s.logger.WithField("method", "create_app")
 	l.Debug("Received new CreateApp request")
 
+	// Check rate limit
+	l.Debug("Checking rate limit")
+	if s.rateLimit(c.RealIP()) {
+		return ErrRateLimitExceeded
+	}
+
 	// Check if maximum apps has been exceeded
 	l.Debug("Verifying the IP hasn't exceeded max Apps")
 	ip := c.RealIP()
