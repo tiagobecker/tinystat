@@ -1,0 +1,13 @@
+Tinystat is a SUPER BASIC free to use and Open Source metrics API used for counting user actions on a hourly basis. 
+
+The need for a basic stat tracking system came while I was trying to display database statistics on a few of my personal web app projects.
+The main issue had arisen when I was performing <code>COUNT</code> queries over very large data sets (6Million records).
+The issue was that it would take several minutes to get a number to display to the user which is not acceptable.
+This is even less ideal when it is required to retrieve an accurate record count in real time.
+Rather than reproducing the same sort of polling-caching logic on every API I build I decided to write a service basic service with a single central database that would provide metrics tracking for all my projects in a simple and secure way.
+By recording the total actions per hour (per record) in an actions table, we can easily query and <code>SUM</code> years worth of actions extremely quickly [as there should be no more than 8,760 records].
+
+There are 3 simple endpoints:
+- The CreateApp endpoint used once to create a new project and define a particular user (or application).
+- The CreateAction endpoint which adds to a stored count for a particular hour
+- The GetActionCount endpoint that recieveds time bounds and returns the number of actions that took place

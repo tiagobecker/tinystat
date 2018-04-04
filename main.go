@@ -42,8 +42,15 @@ func main() {
 	// Bind all handlers to the router
 	l.Info("Binding API endpoints to the router")
 	e.GET("/app/create/:name", s.CreateApp)
-	e.GET("/app/:app_id/action/:action/create", s.CountAction)
+	e.GET("/app/:app_id/action/:action/create", s.CreateAction)
 	e.GET("/app/:app_id/action/:action/count/:duration", s.GetActionCount)
+
+	// Host static demo pages if configured to do so
+	if config.ServeWeb {
+		l.Info("Serving web UI on index")
+		e.Static("/", "web")
+		e.Static("/assets", "web/assets")
+	}
 
 	// Bind the handlers and listen for requests
 	l.Info("Listening for requests")
