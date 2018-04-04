@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,8 @@ var (
 	ErrInvalidToken = echo.NewHTTPError(http.StatusUnauthorized, "Failed to validate token")
 	// ErrIncrementFailure is thrown when we fail to increment an action
 	ErrIncrementFailure = echo.NewHTTPError(http.StatusInternalServerError, "Failed to increment Action count")
+	// ErrParseCountFailure is thrown when we fail to parse the count
+	ErrParseCountFailure = echo.NewHTTPError(http.StatusBadRequest, "Failed to parse count")
 	// ErrParseDurationFailure is thrown when we fail to parse a duration
 	ErrParseDurationFailure = echo.NewHTTPError(http.StatusBadRequest, "Failed to parse duration")
 	// ErrCountSumFailure is thrown when we fail to retrieve the Action count sum
@@ -30,49 +33,58 @@ type Action struct {
 	Timestamp time.Time `sql:"index"`
 }
 
-// CountAction increments the database value for the pas
+// CreateAction increments the database value for the pas
 // Endpoint: /action/:app_id/:metric/create?token=:token
-func (s *Service) CountAction(c echo.Context) error {
-	l := s.logger.WithField("method", "count_action")
-	l.Debug("Received new CountAction request")
+func (s *Service) CreateAction(c echo.Context) error {
+	l := s.logger.WithField("method", "create_action")
+	l.Debug("Received new CreateAction request")
 
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
-	token := c.QueryParam("token")
+	countQuery := c.QueryParam("count")
+	count := 1
+	if countQuery != "" {
+		l.Debug("Decoding count query")
+		c, err := strconv.Atoi(countQuery)
+		if err != nil {
+			return ErrParseCountFailure
+		}
+		count = c
+	}
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID,
 		"action": action,
-		"token":  token,
+		"count":  count,
 	})
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")
-	if valid := s.validateToken(appID, token); !valid {
+	if valid := s.validateToken(appID, c); !valid {
 		l.Error("Failed to validate token")
 		return ErrInvalidToken
 	}
 
 	// Get the current day and use it as a timestamp
 	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	today := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.Local)
 
 	// Store the new action in the database
 	l.Debug("Incrementing Action count in DB")
-	if err := s.incrementAction(appID, action, today); err != nil {
+	if err := s.incrementAction(appID, action, count, today); err != nil {
 		l.WithError(err).Error("Failed to increment Action count")
 		return ErrIncrementFailure
 	}
 
 	// Return an Status OK
-	l.Debug("Returning successful CountAction response")
+	l.Debug("Returning successful CreateAction response")
 	return c.JSON(http.StatusOK, nil)
 }
 
 // GetActionCount retrieves the count of actions for an app in the
 // passed duration. Duration should match the same formatting as
 // https://golang.org/pkg/time/#ParseDuration
-// Endpoint: /action/:app_id/:metric/count/:duration
+// Endpoint: /action/:app_id/action/:action/count/:duration
 func (s *Service) GetActionCount(c echo.Context) error {
 	l := s.logger.WithField("method", "get_action_count")
 	l.Debug("Received new GetActionCount request")
@@ -80,21 +92,12 @@ func (s *Service) GetActionCount(c echo.Context) error {
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
-	token := c.QueryParam("token")
 	duration := c.Param("duration")
 	l = l.WithFields(map[string]interface{}{
 		"app_id":   appID,
 		"action":   action,
-		"token":    token,
 		"duration": duration,
 	})
-
-	// Validate the token on the request
-	l.Debug("Validating the passed token")
-	if valid := s.validateToken(appID, token); !valid {
-		l.Error("Failed to validate token")
-		return ErrInvalidToken
-	}
 
 	// Parse the duration passed
 	l.Debug("Parsing the requested duration")
@@ -123,10 +126,10 @@ func (s *Service) GetActionCount(c echo.Context) error {
 // incrementAction will attempt to increment the count value
 // for an existing Action record for the day. If one doesn't exist
 // a new one will be created with with a count of 1
-func (s *Service) incrementAction(appID, action string, timestamp time.Time) error {
+func (s *Service) incrementAction(appID, action string, count int, timestamp time.Time) error {
 	key := generateKey(appID, action, timestamp)
-	return s.db.Exec(`INSERT INTO actions(id, app_id, action, count, timestamp) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE count = count + 1`,
-		key, appID, action, 1, timestamp).Error
+	return s.db.Exec(`INSERT INTO actions(id, app_id, action, count, timestamp) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE count = count + ?`,
+		key, appID, action, count, timestamp, count).Error
 }
 
 // generateKey generates and returns a unique, deterministic key

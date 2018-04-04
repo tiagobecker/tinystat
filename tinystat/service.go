@@ -3,6 +3,8 @@ package tinystat
 import (
 	"time"
 
+	"github.com/labstack/echo"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/patrickmn/go-cache"
@@ -39,8 +41,14 @@ func NewService(logger *logrus.Logger, mysqlURL string, cacheExp time.Duration) 
 }
 
 // validateToken validates that the token matches the appID
-func (s *Service) validateToken(appID, token string) bool {
+func (s *Service) validateToken(appID string, c echo.Context) bool {
 	l := s.logger.WithField("method", "validate_token")
+
+	var token string
+	token = c.QueryParam("token")
+	if token == "" {
+		token = c.Request().Header.Get("TOKEN")
+	}
 
 	// Check the cache for a stored app/token and validate
 	l.Debug("Checking cache for App")

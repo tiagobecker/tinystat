@@ -1,5 +1,5 @@
 hash: dbee38850f7de2477ed6205867a6111c11bb378492674ab080789bde740bf647
-updated: 2018-04-02T23:07:32.524274-07:00
+updated: 2018-04-03T17:19:18.202057043-07:00
 imports:
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
@@ -12,7 +12,7 @@ imports:
 - name: github.com/jinzhu/inflection
   version: 04140366298a54a039076d798123ffa108fff46c
 - name: github.com/labstack/echo
-  version: 60f88a7a1c4beaf04b6f9254c8d72b45a2ab161e
+  version: 37f1a470efa8abb7e89ad221cb4b1cc36f7047bb
   subpackages:
   - middleware
 - name: github.com/labstack/gommon
@@ -37,7 +37,7 @@ imports:
 - name: github.com/valyala/fasttemplate
   version: dcecefd839c4193db0d35b88ec65b4c12d360ab0
 - name: golang.org/x/crypto
-  version: 12892e8c234f4fe6f6803f052061de9057903bb2
+  version: b2aa35443fbc700ab74c586ae79b81c171851023
   subpackages:
   - acme
   - acme/autocert
