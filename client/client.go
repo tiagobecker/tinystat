@@ -66,7 +66,7 @@ func (c *Client) sendWorker(sendFreq time.Duration) {
 		// Create an action for every count
 		for action, count := range c.actions {
 			// Create the request URL
-			path := fmt.Sprintf("/app/%s/action/%s/create?count=%x", c.appID, action, count)
+			path := fmt.Sprintf("/app/%s/action/%s/create?count=%v", c.appID, action, count)
 
 			// Perform the request
 			c.get(path, nil)
