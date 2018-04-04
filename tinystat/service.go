@@ -72,7 +72,7 @@ func (s *Service) validateToken(appID string, strictAuth bool, c echo.Context) b
 	}
 
 	// If strict or a secure app verify token
-	if strictAuth || app.Secure {
+	if strictAuth || app.StrictAuth {
 		return app.Token == token
 	}
 	// Otherwise fuck it

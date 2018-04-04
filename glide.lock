@@ -1,5 +1,5 @@
 hash: 1c71d6eab66019d5e9f3583a50e7f477900e54ce34f18d6334261c4f5e850bb5
-updated: 2018-04-03T21:41:21.469629-07:00
+updated: 2018-04-03T22:45:12.984166-07:00
 imports:
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e

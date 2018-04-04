@@ -21,12 +21,12 @@ var (
 
 // App is an application that we will count actions for
 type App struct {
-	ID        string    `json:"id,omitempty" gorm:"type:varchar(10);primary_key;unique_index"`
-	Name      string    `json:"name,omitempty" gorm:"type:varchar(100);not null"`
-	Token     string    `json:"token,omitempty" gorm:"type:varchar(32);not null"`
-	Secure    bool      `json:"secure,omitempty" gorm:"type:bool;not null"`
-	IP        string    `json:"ip,omitempty" gorm:"type:varchar(40);index;not null"`
-	CreatedAt time.Time `json:"createdAt,omitempty" sql:"index"`
+	ID         string    `json:"id,omitempty" gorm:"type:varchar(10);primary_key;unique_index"`
+	Name       string    `json:"name,omitempty" gorm:"type:varchar(100);not null"`
+	Token      string    `json:"token,omitempty" gorm:"type:varchar(32);not null"`
+	StrictAuth bool      `json:"strictAuth,omitempty" gorm:"type:bool;not null"`
+	IP         string    `json:"ip,omitempty" gorm:"type:varchar(40);index;not null"`
+	CreatedAt  time.Time `json:"createdAt,omitempty" sql:"index"`
 }
 
 // CreateApp creates a new application and stores it in the database
@@ -49,7 +49,7 @@ func (s *Service) CreateApp(c echo.Context) error {
 	// Generates an AppID UUID and a Token UUID
 	l.Debug("Generating new App UUIDs")
 	name := c.Param("name")
-	secure, _ := strconv.ParseBool(c.QueryParam("secure"))
+	strictAuth, _ := strconv.ParseBool(c.QueryParam("strict_auth"))
 	appID := newAppID()
 	token := newUUID()
 	l = l.WithFields(map[string]interface{}{
@@ -58,12 +58,12 @@ func (s *Service) CreateApp(c echo.Context) error {
 	// Create a new App from the generated UUIDs
 	l.Debug("Generating new App")
 	newApp := &App{
-		ID:        appID,
-		Name:      name,
-		Token:     token,
-		IP:        ip,
-		Secure:    secure,
-		CreatedAt: time.Now(), // Use the servers current time
+		ID:         appID,
+		Name:       name,
+		Token:      token,
+		IP:         ip,
+		StrictAuth: strictAuth,
+		CreatedAt:  time.Now(), // Use the servers current time
 	}
 
 	// Insert the new App in the DB
