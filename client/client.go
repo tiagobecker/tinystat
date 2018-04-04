@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -26,19 +27,25 @@ var (
 // Client contains all dependencies needed to communicate
 // with the Tinystat API
 type Client struct {
-	client  *http.Client
+	client    *http.Client
+	actionMap *ActionMap
+	appID     string
+	token     string
+}
+
+// ActionMap is a thread safe map which holds counts of actions
+type ActionMap struct {
+	sync.RWMutex
 	actions map[string]int64 // action -> count
-	appID   string
-	token   string
 }
 
 // New generates a new Tinystat client
 func New(appID, token string, sendFreq time.Duration) *Client {
 	c := &Client{
-		client:  &http.Client{Timeout: timeout},
-		actions: make(map[string]int64),
-		appID:   appID,
-		token:   token,
+		client:    &http.Client{Timeout: timeout},
+		actionMap: &ActionMap{actions: make(map[string]int64)},
+		appID:     appID,
+		token:     token,
 	}
 	go c.sendWorker(sendFreq)
 	return c
@@ -46,7 +53,11 @@ func New(appID, token string, sendFreq time.Duration) *Client {
 
 // CreateAction increments the action passed in our clients actions
 // It will later on submit all actions to the Tinystat API
-func (c *Client) CreateAction(action string) { c.actions[action]++ }
+func (c *Client) CreateAction(action string) {
+	c.actionMap.Lock()
+	defer c.actionMap.Unlock()
+	c.actionMap.actions[action]++
+}
 
 // GetActionCount retrieves the count of actions for the
 // passed action name and duration
@@ -63,15 +74,17 @@ func (c *Client) GetActionCount(action, duration string) (int64, error) {
 // It is done this way to prevent overwhelming the server
 func (c *Client) sendWorker(sendFreq time.Duration) {
 	for {
+		c.actionMap.Lock()
 		// Create an action for every count
-		for action, count := range c.actions {
+		for action, count := range c.actionMap.actions {
 			// Create the request URL
 			path := fmt.Sprintf("/app/%s/action/%s/create?count=%v", c.appID, action, count)
 
 			// Perform the request
 			c.get(path, nil)
 		}
-		c.actions = make(map[string]int64)
+		c.actionMap.actions = make(map[string]int64)
+		c.actionMap.Unlock()
 	}
 }
 
