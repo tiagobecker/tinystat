@@ -58,7 +58,7 @@ func (s *Service) CreateAction(c echo.Context) error {
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")
-	if valid := s.validateToken(appID, c); !valid {
+	if valid := s.validateToken(appID, true, c); !valid {
 		l.Error("Failed to validate token")
 		return ErrInvalidToken
 	}
@@ -89,6 +89,13 @@ func (s *Service) GetActionCount(c echo.Context) error {
 	duration := c.Param("duration")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action, "duration": duration})
+
+	// Validate the token on the request
+	l.Debug("Validating the passed token")
+	if valid := s.validateToken(appID, false, c); !valid {
+		l.Error("Failed to validate token")
+		return ErrInvalidToken
+	}
 
 	// Parse the duration passed
 	l.Debug("Parsing the requested duration")
@@ -135,6 +142,13 @@ func (s *Service) GetActionSummary(c echo.Context) error {
 	action := c.Param("action")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action})
+
+	// Validate the token on the request
+	l.Debug("Validating the passed token")
+	if valid := s.validateToken(appID, false, c); !valid {
+		l.Error("Failed to validate token")
+		return ErrInvalidToken
+	}
 
 	now := time.Now() // Get the current time for calculating in actionSum
 

@@ -43,7 +43,9 @@ func NewService(logger *logrus.Logger, mysqlURL string, maxApps int, cacheExp ti
 }
 
 // validateToken validates that the token matches the appID
-func (s *Service) validateToken(appID string, c echo.Context) bool {
+// If the strictAuth value is set to true, a token MUST be valid
+// If the strictAuth value is set to false, we'll refer to the users secure flag
+func (s *Service) validateToken(appID string, strictAuth bool, c echo.Context) bool {
 	l := s.logger.WithField("method", "validate_token")
 
 	// Pull the token from the request
@@ -55,22 +57,24 @@ func (s *Service) validateToken(appID string, c echo.Context) bool {
 
 	// Check the cache for a stored app/token and validate
 	l.Debug("Checking cache for App")
-	if appIface, ok := s.cache.Get(appID); ok {
-		if app, ok := appIface.(*App); ok {
-			return app.Token == token
-		}
-	}
-
-	// Attempt to retrieve the app from the DB if it's not in cache
 	var app App
-	if err := s.db.Where(&App{ID: appID}).Find(&app).Error; err != nil {
-		l.WithError(err).Error("Failed to retrieve App from DB")
-		return false
+	if appIface, ok := s.cache.Get(appID); ok {
+		app = *appIface.(*App)
+	} else {
+		// Attempt to retrieve the app from the DB if it couldn't be found in cache
+		if err := s.db.Where(&App{ID: appID}).Find(&app).Error; err != nil {
+			l.WithError(err).Error("Failed to retrieve App from DB")
+			return false
+		}
+		// Cache the App for future
+		l.Debug("Storing App in Cache")
+		s.cache.SetDefault(appID, &app)
 	}
 
-	// Cache the app for future actions and return whether or not
-	// the tokens match
-	l.Debug("Storing App in Cache")
-	s.cache.SetDefault(appID, &app)
-	return app.Token == token
+	// If strict or a secure app verify token
+	if strictAuth || app.Secure {
+		return app.Token == token
+	}
+	// Otherwise fuck it
+	return true
 }

@@ -75,11 +75,7 @@ func (s *Service) CreateApp(c echo.Context) error {
 
 	// Cache the app for future actions
 	l.Debug("Storing App in Cache")
-	s.cache.SetDefault(appID, newApp.Token)
-
-	// Clear fields we don't want to expose on the output
-	newApp.IP = ""
-	newApp.CreatedAt = time.Time{}
+	s.cache.SetDefault(appID, newApp)
 
 	// Return the newly generated App
 	l.Debug("Returning newly generated/stored App")
