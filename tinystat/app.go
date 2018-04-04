@@ -21,12 +21,12 @@ var (
 
 // App is an application that we will count actions for
 type App struct {
-	ID         string    `json:"id,omitempty" gorm:"type:varchar(10);primary_key;unique_index"`
-	Name       string    `json:"name,omitempty" gorm:"type:varchar(100);not null"`
-	Token      string    `json:"token,omitempty" gorm:"type:varchar(32);not null"`
-	StrictAuth bool      `json:"strictAuth,omitempty" gorm:"type:bool;not null"`
-	IP         string    `json:"ip,omitempty" gorm:"type:varchar(40);index;not null"`
-	CreatedAt  time.Time `json:"createdAt,omitempty" sql:"index"`
+	ID         string    `json:"id" gorm:"type:varchar(10);primary_key;unique_index"`
+	Name       string    `json:"name" gorm:"type:varchar(100);not null"`
+	Token      string    `json:"token" gorm:"type:varchar(32);not null"`
+	StrictAuth bool      `json:"strictAuth" gorm:"type:bool;not null"`
+	IP         string    `json:"ip" gorm:"type:varchar(40);index;not null"`
+	CreatedAt  time.Time `json:"createdAt" sql:"index"`
 }
 
 // CreateApp creates a new application and stores it in the database
