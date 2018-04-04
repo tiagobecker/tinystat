@@ -74,6 +74,7 @@ func (c *Client) GetActionCount(action, duration string) (int64, error) {
 // It is done this way to prevent overwhelming the server
 func (c *Client) sendWorker(sendFreq time.Duration) {
 	for {
+		time.Sleep(sendFreq)
 		c.actionMap.Lock()
 		// Create an action for every count
 		for action, count := range c.actionMap.actions {
