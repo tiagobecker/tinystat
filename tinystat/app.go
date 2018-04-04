@@ -35,15 +35,29 @@ func (s *Service) CreateApp(c echo.Context) error {
 	l := s.logger.WithField("method", "create_app")
 	l.Debug("Received new CreateApp request")
 
+	// Decode the request variables
+	ip := c.RealIP()
+	name := c.Param("name")
+	strictAuth, _ := strconv.ParseBool(c.QueryParam("strict_auth"))
+	l = l.WithFields(map[string]interface{}{
+		"name": name, "strict_auth": strictAuth})
+
 	// Check rate limit
 	l.Debug("Checking rate limit")
 	if s.rateLimit(c.RealIP()) {
+		l.Error("Rate limit exceeded")
 		return ErrRateLimitExceeded
 	}
 
+	// Generates an AppID UUID and a Token UUID
+	l.Debug("Generating new App UUIDs")
+	appID := newAppID()
+	token := newUUID()
+	l = l.WithFields(map[string]interface{}{
+		"app_id": appID, "token": token})
+
 	// Check if maximum apps has been exceeded
 	l.Debug("Verifying the IP hasn't exceeded max Apps")
-	ip := c.RealIP()
 	apps, err := s.currentApps(ip)
 	if err != nil {
 		return ErrAppCountRetrievalFailure
@@ -51,15 +65,6 @@ func (s *Service) CreateApp(c echo.Context) error {
 	if apps >= s.maxApps {
 		return ErrMaxAppsExceeded
 	}
-
-	// Generates an AppID UUID and a Token UUID
-	l.Debug("Generating new App UUIDs")
-	name := c.Param("name")
-	strictAuth, _ := strconv.ParseBool(c.QueryParam("strict_auth"))
-	appID := newAppID()
-	token := newUUID()
-	l = l.WithFields(map[string]interface{}{
-		"name": name, "app_id": appID, "token": token})
 
 	// Create a new App from the generated UUIDs
 	l.Debug("Generating new App")

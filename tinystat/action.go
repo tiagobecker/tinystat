@@ -40,12 +40,6 @@ func (s *Service) CreateAction(c echo.Context) error {
 	l := s.logger.WithField("method", "create_action")
 	l.Debug("Received new CreateAction request")
 
-	// Check rate limit
-	l.Debug("Checking rate limit")
-	if s.rateLimit(c.RealIP()) {
-		return ErrRateLimitExceeded
-	}
-
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
@@ -61,6 +55,13 @@ func (s *Service) CreateAction(c echo.Context) error {
 	}
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action, "count": count})
+
+	// Check rate limit
+	l.Debug("Checking rate limit")
+	if s.rateLimit(c.RealIP(), action) {
+		l.Error("Rate limit exceeded")
+		return ErrRateLimitExceeded
+	}
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")
@@ -89,18 +90,19 @@ func (s *Service) GetActionCount(c echo.Context) error {
 	l := s.logger.WithField("method", "get_action_count")
 	l.Debug("Received new GetActionCount request")
 
-	// Check rate limit
-	l.Debug("Checking rate limit")
-	if s.rateLimit(c.RealIP()) {
-		return ErrRateLimitExceeded
-	}
-
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
 	duration := c.Param("duration")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action, "duration": duration})
+
+	// Check rate limit
+	l.Debug("Checking rate limit")
+	if s.rateLimit(c.RealIP(), action) {
+		l.Error("Rate limit exceeded")
+		return ErrRateLimitExceeded
+	}
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")
@@ -149,17 +151,18 @@ func (s *Service) GetActionSummary(c echo.Context) error {
 	l := s.logger.WithField("method", "get_action_summary")
 	l.Debug("Received new GetActionSummary request")
 
-	// Check rate limit
-	l.Debug("Checking rate limit")
-	if s.rateLimit(c.RealIP()) {
-		return ErrRateLimitExceeded
-	}
-
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action})
+
+	// Check rate limit
+	l.Debug("Checking rate limit")
+	if s.rateLimit(c.RealIP(), action) {
+		l.Error("Rate limit exceeded")
+		return ErrRateLimitExceeded
+	}
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")

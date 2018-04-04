@@ -2,6 +2,7 @@ package tinystat
 
 import (
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,7 +32,7 @@ type Service struct {
 // rateMap is a a wrapper struct for performing rate-limiting
 type rateMap struct {
 	sync.Mutex
-	ipMap map[string]time.Time
+	ipMap map[string]time.Time // ip_action_vars... -> time
 }
 
 // NewService generates a new Service reference and return it
@@ -100,18 +101,21 @@ func (s *Service) validateToken(appID string, strictAuth bool, c echo.Context) b
 
 // rateLimit returns true if the ip passed has performed too
 // many requests lately
-func (s *Service) rateLimit(ip string) bool {
+// vars should include the IP and any other variables to make
+// rate limiting unique to a path
+func (s *Service) rateLimit(vars ...string) bool {
+	key := strings.Join(vars, "_")
 	s.rateMap.Lock()
 	defer s.rateMap.Unlock()
 
 	// If this IP is in the map and it's last request
 	// was within the specified ratelimit timeframe
-	if last, ok := s.rateMap.ipMap[ip]; ok &&
+	if last, ok := s.rateMap.ipMap[key]; ok &&
 		last.After(time.Now().Add(-1*rateLimit)) {
 		return true
 	}
 
 	// Set a new last request time and allow the request
-	s.rateMap.ipMap[ip] = time.Now()
+	s.rateMap.ipMap[key] = time.Now()
 	return false
 }
