@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -12,6 +13,8 @@ var (
 	Env = strings.ToLower(getEnv("ENVIRONMENT", "development"))
 	// MysqlURL is the URL used to access the MySQL database
 	MysqlURL = strings.ToLower(getEnv("MYSQL_URL", ""))
+	// ServeWeb defines if the web static site should be served
+	ServeWeb, _ = strconv.ParseBool(getEnv("SERVE_WEB", "false"))
 )
 
 // getEnv retrieves variables from the environment and falls back
