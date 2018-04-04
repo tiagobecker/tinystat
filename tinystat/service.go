@@ -11,15 +11,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Service contains all dependencies needed for a tinystat service
+// Service contains all dependencies needed for the Tinystat service
 type Service struct {
-	logger *logrus.Entry
-	db     *gorm.DB
-	cache  *cache.Cache
+	logger  *logrus.Entry
+	maxApps int
+	db      *gorm.DB
+	cache   *cache.Cache
 }
 
 // NewService generates a new Service reference and return it
-func NewService(logger *logrus.Logger, mysqlURL string, cacheExp time.Duration) (*Service, error) {
+func NewService(logger *logrus.Logger, mysqlURL string, maxApps int, cacheExp time.Duration) (*Service, error) {
 	l := logger.WithField("module", "new_service")
 
 	// Create the MySQL Client and AutoMigrate tables
@@ -34,9 +35,10 @@ func NewService(logger *logrus.Logger, mysqlURL string, cacheExp time.Duration) 
 	// Return the new Service
 	l.Debug("Returning new service")
 	return &Service{
-		logger: logger.WithField("service", "tinystat"),
-		db:     db,
-		cache:  cache.New(cacheExp, cacheExp),
+		logger:  logger.WithField("service", "tinystat"),
+		maxApps: maxApps,
+		db:      db,
+		cache:   cache.New(cacheExp, cacheExp),
 	}, nil
 }
 
@@ -44,6 +46,7 @@ func NewService(logger *logrus.Logger, mysqlURL string, cacheExp time.Duration) 
 func (s *Service) validateToken(appID string, c echo.Context) bool {
 	l := s.logger.WithField("method", "validate_token")
 
+	// Pull the token from the request
 	var token string
 	token = c.QueryParam("token")
 	if token == "" {

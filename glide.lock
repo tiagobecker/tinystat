@@ -1,5 +1,5 @@
-hash: dbee38850f7de2477ed6205867a6111c11bb378492674ab080789bde740bf647
-updated: 2018-04-03T17:19:18.202057043-07:00
+hash: 1c71d6eab66019d5e9f3583a50e7f477900e54ce34f18d6334261c4f5e850bb5
+updated: 2018-04-03T21:41:21.469629-07:00
 imports:
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
@@ -42,6 +42,14 @@ imports:
   - acme
   - acme/autocert
   - ssh/terminal
+- name: golang.org/x/net
+  version: b68f30494add4df6bd8ef5e82803f308e7f7c59c
+  subpackages:
+  - context
+- name: golang.org/x/sync
+  version: 1d60e4601c6fd243af51cc01ddf169918a5407ca
+  subpackages:
+  - errgroup
 - name: golang.org/x/sys
   version: 378d26f46672a356c46195c28f61bdb4c0a781dd
   subpackages:

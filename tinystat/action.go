@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -53,10 +54,7 @@ func (s *Service) CreateAction(c echo.Context) error {
 		count = c
 	}
 	l = l.WithFields(map[string]interface{}{
-		"app_id": appID,
-		"action": action,
-		"count":  count,
-	})
+		"app_id": appID, "action": action, "count": count})
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")
@@ -65,18 +63,14 @@ func (s *Service) CreateAction(c echo.Context) error {
 		return ErrInvalidToken
 	}
 
-	// Get the current day and use it as a timestamp
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.Local)
-
 	// Store the new action in the database
 	l.Debug("Incrementing Action count in DB")
-	if err := s.incrementAction(appID, action, count, today); err != nil {
+	if err := s.incrementAction(appID, action, count); err != nil {
 		l.WithError(err).Error("Failed to increment Action count")
 		return ErrIncrementFailure
 	}
 
-	// Return an Status OK
+	// Return a Status OK
 	l.Debug("Returning successful CreateAction response")
 	return c.JSON(http.StatusOK, nil)
 }
@@ -94,10 +88,7 @@ func (s *Service) GetActionCount(c echo.Context) error {
 	action := c.Param("action")
 	duration := c.Param("duration")
 	l = l.WithFields(map[string]interface{}{
-		"app_id":   appID,
-		"action":   action,
-		"duration": duration,
-	})
+		"app_id": appID, "action": action, "duration": duration})
 
 	// Parse the duration passed
 	l.Debug("Parsing the requested duration")
@@ -107,13 +98,12 @@ func (s *Service) GetActionCount(c echo.Context) error {
 		return ErrParseDurationFailure
 	}
 
-	// Calculate the starting bound
-	startTime := time.Now().Add(-1 * dur)
+	now := time.Now() // Get the current time for calculating in actionSum
 
 	// Retrieve the action count from the DB and return
 	l.Debug("Retrieve the count of Actions from the DB")
-	count, err := s.actionSum(appID, action, startTime)
-	if err != nil {
+	var count int64
+	if err := s.actionSum(appID, action, now.Add(-1*dur), &count); err != nil {
 		l.WithError(err).Error("Failed to retrieve Action sum")
 		return ErrCountSumFailure
 	}
@@ -123,13 +113,60 @@ func (s *Service) GetActionCount(c echo.Context) error {
 	return c.JSON(http.StatusOK, count)
 }
 
+// ActionSummary contains a summary of actions over several passed intervals
+type ActionSummary struct {
+	Hour  int64 `json:"hour"`
+	Day   int64 `json:"day"`
+	Week  int64 `json:"week"`
+	Month int64 `json:"month"`
+	Year  int64 `json:"year"`
+}
+
+// GetActionSummary retrieves all most recent counts of actions for an app and
+// organizes it into a summary. Duration should match the same formatting as
+// https://golang.org/pkg/time/#ParseDuration
+// Endpoint: /action/:app_id/action/:action/summary
+func (s *Service) GetActionSummary(c echo.Context) error {
+	l := s.logger.WithField("method", "get_action_summary")
+	l.Debug("Received new GetActionSummary request")
+
+	// Decode the request variables
+	appID := c.Param("app_id")
+	action := c.Param("action")
+	l = l.WithFields(map[string]interface{}{
+		"app_id": appID, "action": action})
+
+	now := time.Now() // Get the current time for calculating in actionSum
+
+	// Retrieve all count values and place them on the ActionSummary
+	var g errgroup.Group
+	var as ActionSummary
+	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour), &as.Hour) })
+	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour*24), &as.Day) })
+	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour*24*7), &as.Week) })
+	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour*24*7*30), &as.Month) })
+	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour*24*7*365), &as.Year) })
+	if err := g.Wait(); err != nil {
+		return ErrCountSumFailure
+	}
+
+	// Return an Status OK
+	l.Debug("Returning successful GetActionCount response")
+	return c.JSON(http.StatusOK, as)
+}
+
 // incrementAction will attempt to increment the count value
 // for an existing Action record for the day. If one doesn't exist
 // a new one will be created with with a count of 1
-func (s *Service) incrementAction(appID, action string, count int, timestamp time.Time) error {
-	key := generateKey(appID, action, timestamp)
+func (s *Service) incrementAction(appID, action string, count int) error {
+	// Get the current day and use it as a timestamp
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.Local)
+
+	// Generate a key and execute the increment query
+	key := generateKey(appID, action, today)
 	return s.db.Exec(`INSERT INTO actions(id, app_id, action, count, timestamp) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE count = count + ?`,
-		key, appID, action, count, timestamp, count).Error
+		key, appID, action, count, today, count).Error
 }
 
 // generateKey generates and returns a unique, deterministic key
@@ -143,15 +180,20 @@ func generateKey(appID, action string, timestamp time.Time) string {
 // SumResult represents a sum query result
 type SumResult struct{ Total int64 }
 
-// actionSum will attempt to retrieve all daily actions and SUM
-// them all to retrieve the total number of actions
-func (s *Service) actionSum(appID, action string, startTime time.Time) (int64, error) {
+// actionSum will attempt to retrieve all daily actions and
+// SUM them all to retrieve the total number of actions
+func (s *Service) actionSum(appID, action string, startTime time.Time, out *int64) error {
 	var res SumResult
-	return res.Total, s.db.
-		Table("actions").
+	if err := s.db.Model(&Action{}).
 		Select("sum(count) as total").
 		Where("app_id = ?", appID).
 		Where("action = ?", action).
 		Where("timestamp > ?", startTime).
-		Scan(&res).Error
+		Scan(&res).Error; err != nil {
+		return err
+	}
+
+	// Set the count value of out passed
+	*out = res.Total
+	return nil
 }

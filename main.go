@@ -29,7 +29,7 @@ func main() {
 
 	// Create the tinystat service
 	l.Info("Generating all Tinystat dependencies")
-	s, err := tinystat.NewService(logger, config.MysqlURL, time.Hour*24)
+	s, err := tinystat.NewService(logger, config.MysqlURL, config.MaxAppsPerIP, time.Hour*24)
 	if err != nil {
 		l.WithError(err).Fatalln("Failed to generate Tinystat service")
 	}
@@ -43,6 +43,7 @@ func main() {
 	l.Info("Binding API endpoints to the router")
 	e.GET("/app/create/:name", s.CreateApp)
 	e.GET("/app/:app_id/action/:action/create", s.CreateAction)
+	e.GET("/app/:app_id/action/:action/count", s.GetActionSummary)
 	e.GET("/app/:app_id/action/:action/count/:duration", s.GetActionCount)
 
 	// Host static demo pages if configured to do so

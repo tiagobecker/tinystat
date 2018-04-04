@@ -15,6 +15,8 @@ var (
 	MysqlURL = strings.ToLower(getEnv("MYSQL_URL", ""))
 	// ServeWeb defines if the web static site should be served
 	ServeWeb, _ = strconv.ParseBool(getEnv("SERVE_WEB", "false"))
+	// MaxAppsPerIP is the number of Apps each IP is allowed to have
+	MaxAppsPerIP, _ = strconv.Atoi(getEnv("MAX_APPS_PER_IP", "5"))
 )
 
 // getEnv retrieves variables from the environment and falls back
