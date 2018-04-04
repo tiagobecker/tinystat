@@ -12,7 +12,7 @@ var (
 	// Env is the environment (development, production)
 	Env = strings.ToLower(getEnv("ENVIRONMENT", "development"))
 	// MysqlURL is the URL used to access the MySQL database
-	MysqlURL = strings.ToLower(getEnv("MYSQL_URL", ""))
+	MysqlURL = getEnv("MYSQL_URL", "")
 	// ServeWeb defines if the web static site should be served
 	ServeWeb, _ = strconv.ParseBool(getEnv("SERVE_WEB", "false"))
 	// MaxAppsPerIP is the number of Apps each IP is allowed to have

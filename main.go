@@ -33,6 +33,7 @@ func main() {
 	if err != nil {
 		l.WithError(err).Fatalln("Failed to generate Tinystat service")
 	}
+	defer s.Close()
 
 	// Generate the router
 	l.Info("Generating router and middleware")

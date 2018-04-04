@@ -3,10 +3,9 @@ package tinystat
 import (
 	"time"
 
-	"github.com/labstack/echo"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/labstack/echo"
 	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 )
@@ -41,6 +40,9 @@ func NewService(logger *logrus.Logger, mysqlURL string, maxApps int, cacheExp ti
 		cache:   cache.New(cacheExp, cacheExp),
 	}, nil
 }
+
+// Close closes the db connection
+func (s *Service) Close() error { return s.db.Close() }
 
 // validateToken validates that the token matches the appID
 // If the strictAuth value is set to true, a token MUST be valid
