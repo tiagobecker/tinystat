@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/heroku/x/hmetrics/onload"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/sdwolfe32/tinystat/config"

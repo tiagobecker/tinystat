@@ -7,88 +7,98 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
 
-const (
-	// baseURL is the baseURL of Tinystat
-	baseURL = "https://tinystat.io"
-	// timeout is the default timeout that will be set on the http.Client
-	timeout = time.Duration(time.Second * 5)
-	// sendFreq is the frequency of at which counts will be submitted
-	sendFreq = time.Duration(time.Second * 10)
-)
+// baseURL is the baseURL of Tinystat
+const baseURL = "https://tinystat.io"
 
 var (
+	// DefaultClient is the client that will be used for all metrics
+	// reporting
+	DefaultClient = newClient(time.Second*5, time.Second*10)
 	// ErrNonOKResponse is thrown when we fail to receive a 200
 	// from the Tinystat API
 	ErrNonOKResponse = errors.New("Non 200 status code received")
+	// ErrMissingCredentials is thrown when we fail to find
+	// an appID or token on the DefaultClient
+	ErrMissingCredentials = errors.New("Tinystat credentials are missing")
 )
 
 // Client contains all dependencies needed to communicate
 // with the Tinystat API
 type Client struct {
-	client    *http.Client
-	actionMap *ActionMap
-	appID     string
-	token     string
-}
-
-// ActionMap is a thread safe map which holds counts of actions
-type ActionMap struct {
 	sync.RWMutex
+	client  *http.Client
 	actions map[string]int64 // action -> count
+	appID   string
+	token   string
 }
 
 // New generates a new Tinystat client
-func New(appID, token string) *Client {
+func newClient(timeout, sendFreq time.Duration) *Client {
 	c := &Client{
-		client:    &http.Client{Timeout: timeout},
-		actionMap: &ActionMap{actions: make(map[string]int64)},
-		appID:     appID,
-		token:     token,
+		client:  &http.Client{Timeout: timeout},
+		actions: make(map[string]int64),
+		appID:   os.Getenv("TINYSTAT_APP_ID"),
+		token:   os.Getenv("TINYSTAT_TOKEN"),
 	}
-	go c.sendWorker()
+	go c.sendWorker(sendFreq)
 	return c
-}
-
-// CreateAction increments the action passed in our clients actions
-// It will later on submit all actions to the Tinystat API
-func (c *Client) CreateAction(action string) {
-	c.actionMap.Lock()
-	defer c.actionMap.Unlock()
-	c.actionMap.actions[action]++
-}
-
-// GetActionCount retrieves the count of actions for the
-// passed action name and duration
-func (c *Client) GetActionCount(action, duration string) (int64, error) {
-	// Create the request URL
-	path := fmt.Sprintf("/app/%s/action/%s/count/%s", c.appID, action, duration)
-
-	// Execute the request return the decoded response
-	var count int64
-	return count, c.get(path, &count)
 }
 
 // sendWorker periodically sends new actions to the Tinystat API
 // It is done this way to prevent overwhelming the server
-func (c *Client) sendWorker() {
+func (c *Client) sendWorker(sendFreq time.Duration) {
+	// Don't start worker if appID and token aren't set
+	if c.appID == "" || c.token == "" {
+		return
+	}
+
+	// Begin infinite send loop
 	for {
 		time.Sleep(sendFreq)
-		c.actionMap.Lock()
+		c.Lock()
 		// Create an action for every count
-		for action, count := range c.actionMap.actions {
-			// Create the request URL
-			path := fmt.Sprintf("/app/%s/action/%s/create?count=%v", c.appID, action, count)
-
+		for action, count := range c.actions {
 			// Perform the request
-			c.get(path, nil)
+			c.get(fmt.Sprintf("/app/%s/action/%s/create?count=%v",
+				c.appID, action, count), nil)
 		}
-		c.actionMap.actions = make(map[string]int64)
-		c.actionMap.Unlock()
+		c.actions = make(map[string]int64)
+		c.Unlock()
 	}
+}
+
+// CreateAction increments the action passed in our clients actions
+// It will later on submit all actions to the Tinystat API
+func (c *Client) createAction(action string) error {
+	// Check for missing credentials on client
+	if c.appID == "" || c.token == "" {
+		return ErrMissingCredentials
+	}
+
+	// Store the action
+	c.Lock()
+	defer c.Unlock()
+	c.actions[action]++
+	return nil
+}
+
+// getActionCount retrieves the count of actions for the
+// passed action name and duration
+func (c *Client) getActionCount(action, duration string) (int64, error) {
+	// Check for missing credentials on client
+	if c.appID == "" || c.token == "" {
+		return 0, ErrMissingCredentials
+	}
+
+	// Execute the request and return the decoded count
+	var count int64
+	return count, c.get(fmt.Sprintf("/app/%s/action/%s/count/%s",
+		c.appID, action, duration), &count)
 }
 
 // post performs a POST request using the provided path, in body

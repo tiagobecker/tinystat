@@ -1,10 +1,15 @@
-hash: 1c71d6eab66019d5e9f3583a50e7f477900e54ce34f18d6334261c4f5e850bb5
-updated: 2018-04-03T23:20:05.967492-07:00
+hash: 53f80ab7c71a23d1bdb566ad1b4144a4f2eedeca643f6a744724dbc40a5170f5
+updated: 2018-04-04T17:41:34.24663-07:00
 imports:
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/go-sql-driver/mysql
   version: 1a676ac6e4dce68e9303a1800773861350374a9e
+- name: github.com/heroku/x
+  version: a4225bbbfc8a517c9a95251aec1a8189443673b1
+  subpackages:
+  - hmetrics
+  - hmetrics/onload
 - name: github.com/jinzhu/gorm
   version: 52c5c8127cf4aeffde3e0aa9222640832075a90f
   subpackages:
@@ -43,7 +48,7 @@ imports:
   - acme/autocert
   - ssh/terminal
 - name: golang.org/x/net
-  version: b68f30494add4df6bd8ef5e82803f308e7f7c59c
+  version: b3c676e531a6dc479fa1b35ac961c13f5e2b4d2e
   subpackages:
   - context
 - name: golang.org/x/sync
@@ -51,7 +56,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 378d26f46672a356c46195c28f61bdb4c0a781dd
+  version: 1d206c9fa8975fb4cf00df1dc8bf3283dc24ba0e
   subpackages:
   - unix
   - windows

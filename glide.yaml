@@ -1,5 +1,8 @@
 package: github.com/sdwolfe32/tinystat
 import:
+- package: github.com/heroku/x
+  subpackages:
+  - hmetrics/onload
 - package: github.com/jinzhu/gorm
   subpackages:
   - dialects/mysql
