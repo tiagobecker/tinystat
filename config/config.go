@@ -17,6 +17,10 @@ var (
 	ServeWeb, _ = strconv.ParseBool(getEnv("SERVE_WEB", "false"))
 	// MaxAppsPerIP is the number of Apps each IP is allowed to have
 	MaxAppsPerIP, _ = strconv.Atoi(getEnv("MAX_APPS_PER_IP", "5"))
+	// TinystatAppID is the App ID used with Tinystat
+	TinystatAppID = getEnv("TINYSTAT_APP_ID", "")
+	// TinystatToken is the Token used to authenticate Tinystat requests
+	TinystatToken = getEnv("TINYSTAT_TOKEN", "")
 )
 
 // getEnv retrieves variables from the environment and falls back

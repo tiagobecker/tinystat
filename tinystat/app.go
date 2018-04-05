@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sdwolfe32/tinystat/client"
 )
 
 var (
@@ -87,6 +88,9 @@ func (s *Service) CreateApp(c echo.Context) error {
 	// Cache the app for future actions
 	l.Debug("Storing App in Cache")
 	s.cache.SetDefault(appID, newApp)
+
+	// Report the successful create-app to ourselves
+	client.CreateAction("create-app")
 
 	// Return the newly generated App
 	l.Debug("Returning newly generated/stored App")

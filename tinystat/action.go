@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"github.com/sdwolfe32/tinystat/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -77,6 +78,9 @@ func (s *Service) CreateAction(c echo.Context) error {
 		return ErrIncrementFailure
 	}
 
+	// Report the successful create-action to ourselves
+	client.CreateAction("create-action")
+
 	// Return a Status OK
 	l.Debug("Returning successful CreateAction response")
 	return c.JSON(http.StatusOK, nil)
@@ -128,6 +132,9 @@ func (s *Service) GetActionCount(c echo.Context) error {
 		l.WithError(err).Error("Failed to retrieve Action sum")
 		return ErrCountSumFailure
 	}
+
+	// Report the successful create-action to ourselves
+	client.CreateAction("get-action-count")
 
 	// Return an Status OK
 	l.Debug("Returning successful GetActionCount response")
@@ -184,6 +191,9 @@ func (s *Service) GetActionSummary(c echo.Context) error {
 	if err := g.Wait(); err != nil {
 		return ErrCountSumFailure
 	}
+
+	// Report the successful get-action-summary to ourselves
+	client.CreateAction("get-action-summary")
 
 	// Return an Status OK
 	l.Debug("Returning successful GetActionCount response")
