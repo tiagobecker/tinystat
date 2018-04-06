@@ -8,8 +8,8 @@ import (
 	_ "github.com/heroku/x/hmetrics/onload"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/sdwolfe32/tinystat/api"
 	"github.com/sdwolfe32/tinystat/config"
-	"github.com/sdwolfe32/tinystat/tinystat"
 	"github.com/sirupsen/logrus"
 )
 
@@ -30,7 +30,7 @@ func main() {
 
 	// Create the tinystat service
 	l.Info("Generating all Tinystat dependencies")
-	s, err := tinystat.NewService(logger, config.MysqlURL, config.MaxAppsPerIP, time.Hour*24)
+	s, err := api.NewService(logger, config.MysqlURL, config.MaxAppsPerIP, time.Hour*24)
 	if err != nil {
 		l.WithError(err).Fatalln("Failed to generate Tinystat service")
 	}

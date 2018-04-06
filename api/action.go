@@ -1,4 +1,4 @@
-package tinystat
+package api
 
 import (
 	"crypto/md5"
