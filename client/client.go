@@ -7,18 +7,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 )
 
 // baseURL is the baseURL of Tinystat
-const baseURL = "https://tinystat.io"
+const (
+	baseURL              = "https://tinystat.io"
+	actionPostPath       = "/app/%s/action/%s/create/%v"
+	actionSummaryGetPath = "/app/%s/action/%s/count"
+	actionGetPath        = "/app/%s/action/%s/count/%s"
+)
 
 var (
-	// DefaultClient is the client that will be used for all metrics
-	// reporting
-	DefaultClient = newClient(time.Second*5, time.Second*10)
 	// ErrNonOKResponse is thrown when we fail to receive a 200
 	// from the Tinystat API
 	ErrNonOKResponse = errors.New("Non 200 status code received")
@@ -37,17 +38,33 @@ type Client struct {
 	token   string
 }
 
-// New generates a new Tinystat client
-func newClient(timeout, sendFreq time.Duration) *Client {
-	c := &Client{
-		client:  &http.Client{Timeout: timeout},
-		actions: make(map[string]int64),
-		appID:   os.Getenv("TINYSTAT_APP_ID"),
-		token:   os.Getenv("TINYSTAT_TOKEN"),
-	}
+// NewClient generates a new standard Client using the passed
+// timeout, sendFreq, appID and token
+func NewClient(appID, token string, timeout, sendFreq time.Duration) *Client {
+	// Generate a new client, apply the APP_ID and TOKEN
+	c := newClient(timeout)
+	c.SetAppID(appID)
+	c.SetToken(token)
+
+	// Begin the worker and return
 	go c.sendWorker(sendFreq)
 	return c
 }
+
+// newClient generates a new basic Tinystat Client using the
+// passed http timeout and send frequency
+func newClient(timeout time.Duration) *Client {
+	return &Client{
+		client:  &http.Client{Timeout: timeout},
+		actions: make(map[string]int64),
+	}
+}
+
+// SetAppID sets the AppID on a Client
+func (c *Client) SetAppID(appID string) { c.appID = appID }
+
+// SetToken sets the Token on the Client
+func (c *Client) SetToken(token string) { c.token = token }
 
 // sendWorker periodically sends new actions to the Tinystat API
 // It is done this way to prevent overwhelming the server
@@ -64,41 +81,11 @@ func (c *Client) sendWorker(sendFreq time.Duration) {
 		// Create an action for every count
 		for action, count := range c.actions {
 			// Perform the request
-			c.get(fmt.Sprintf("/app/%s/action/%s/create?count=%v",
-				c.appID, action, count), nil)
+			go c.post(fmt.Sprintf(actionPostPath, c.appID, action, count), nil, nil)
 		}
 		c.actions = make(map[string]int64)
 		c.Unlock()
 	}
-}
-
-// CreateAction increments the action passed in our clients actions
-// It will later on submit all actions to the Tinystat API
-func (c *Client) createAction(action string) error {
-	// Check for missing credentials on client
-	if c.appID == "" || c.token == "" {
-		return ErrMissingCredentials
-	}
-
-	// Store the action
-	c.Lock()
-	defer c.Unlock()
-	c.actions[action]++
-	return nil
-}
-
-// getActionCount retrieves the count of actions for the
-// passed action name and duration
-func (c *Client) getActionCount(action, duration string) (int64, error) {
-	// Check for missing credentials on client
-	if c.appID == "" || c.token == "" {
-		return 0, ErrMissingCredentials
-	}
-
-	// Execute the request and return the decoded count
-	var count int64
-	return count, c.get(fmt.Sprintf("/app/%s/action/%s/count/%s",
-		c.appID, action, duration), &count)
 }
 
 // post performs a POST request using the provided path, in body
@@ -127,11 +114,14 @@ func (c *Client) do(method, path string, in, out interface{}) error {
 	}
 
 	// Generate the request and append auth headers
+	// if found on the client
 	req, err := http.NewRequest(method, baseURL+path, body)
 	if err != nil {
 		return err
 	}
-	req.Header.Add("TOKEN", c.token)
+	if c.token != "" {
+		req.Header.Add("TOKEN", c.token)
+	}
 
 	// Perform the request
 	res, err := c.client.Do(req)

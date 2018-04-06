@@ -44,10 +44,9 @@ func main() {
 	// Bind all handlers to the router
 	l.Info("Binding API endpoints to the router")
 	e.POST("/app/create/:name", s.CreateApp)
-	e.POST("/app/:app_id/action/:action/create", s.CreateAction)
-	e.GET("/app/:app_id/action/:action/create", s.CreateAction)
-	e.GET("/app/:app_id/action/:action/count", s.GetActionSummary)
-	e.GET("/app/:app_id/action/:action/count/:duration", s.GetActionCount)
+	e.POST("/app/:app_id/action/:action/create/:count", s.CreateAction)
+	e.GET("/app/:app_id/action/:action/count", s.ActionSummary)
+	e.GET("/app/:app_id/action/:action/count/:duration", s.ActionCount)
 
 	// Host static demo pages if configured to do so
 	if config.ServeWeb {

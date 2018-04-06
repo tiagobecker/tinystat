@@ -10,6 +10,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/sdwolfe32/tinystat/client"
+	"github.com/sdwolfe32/tinystat/models"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -44,15 +45,9 @@ func (s *Service) CreateAction(c echo.Context) error {
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
-	countQuery := c.QueryParam("count")
-	count := 1
-	if countQuery != "" {
-		l.Debug("Decoding count query")
-		c, err := strconv.Atoi(countQuery)
-		if err != nil {
-			return ErrParseCountFailure
-		}
-		count = c
+	count, err := strconv.Atoi(c.QueryParam("count"))
+	if err != nil {
+		return ErrParseCountFailure
 	}
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action, "count": count})
@@ -86,11 +81,11 @@ func (s *Service) CreateAction(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-// GetActionCount retrieves the count of actions for an app in the
+// ActionCount retrieves the count of actions for an app in the
 // passed duration. Duration should match the same formatting as
 // https://golang.org/pkg/time/#ParseDuration
 // Endpoint: /action/:app_id/action/:action/count/:duration
-func (s *Service) GetActionCount(c echo.Context) error {
+func (s *Service) ActionCount(c echo.Context) error {
 	l := s.logger.WithField("method", "get_action_count")
 	l.Debug("Received new GetActionCount request")
 
@@ -100,13 +95,6 @@ func (s *Service) GetActionCount(c echo.Context) error {
 	duration := c.Param("duration")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action, "duration": duration})
-
-	// Check rate limit
-	l.Debug("Checking rate limit")
-	if s.rateLimit(c.RealIP(), action) {
-		l.Error("Rate limit exceeded")
-		return ErrRateLimitExceeded
-	}
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")
@@ -141,20 +129,11 @@ func (s *Service) GetActionCount(c echo.Context) error {
 	return c.JSON(http.StatusOK, count)
 }
 
-// ActionSummary contains a summary of actions over several passed intervals
-type ActionSummary struct {
-	Hour  int64 `json:"hour"`
-	Day   int64 `json:"day"`
-	Week  int64 `json:"week"`
-	Month int64 `json:"month"`
-	Year  int64 `json:"year"`
-}
-
-// GetActionSummary retrieves all most recent counts of actions for an app and
+// ActionSummary retrieves all most recent counts of actions for an app and
 // organizes it into a summary. Duration should match the same formatting as
 // https://golang.org/pkg/time/#ParseDuration
 // Endpoint: /action/:app_id/action/:action/summary
-func (s *Service) GetActionSummary(c echo.Context) error {
+func (s *Service) ActionSummary(c echo.Context) error {
 	l := s.logger.WithField("method", "get_action_summary")
 	l.Debug("Received new GetActionSummary request")
 
@@ -163,13 +142,6 @@ func (s *Service) GetActionSummary(c echo.Context) error {
 	action := c.Param("action")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action})
-
-	// Check rate limit
-	l.Debug("Checking rate limit")
-	if s.rateLimit(c.RealIP(), action) {
-		l.Error("Rate limit exceeded")
-		return ErrRateLimitExceeded
-	}
 
 	// Validate the token on the request
 	l.Debug("Validating the passed token")
@@ -182,7 +154,7 @@ func (s *Service) GetActionSummary(c echo.Context) error {
 
 	// Retrieve all count values and place them on the ActionSummary
 	var g errgroup.Group
-	var as ActionSummary
+	var as models.ActionSummary
 	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour), &as.Hour) })
 	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour*24), &as.Day) })
 	g.Go(func() error { return s.actionSum(appID, action, now.Add(-1*time.Hour*24*7), &as.Week) })
