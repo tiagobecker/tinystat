@@ -117,7 +117,7 @@ func (c *Client) do(method, path string, in, out interface{}) error {
 	}
 
 	// Generate the full request URL
-	url := fmt.Sprintf("%s/v%v/%s", c.baseURL, c.version, path)
+	url := fmt.Sprintf("%s/v%v%s", c.baseURL, c.version, path)
 
 	// Generate the request and append auth headers
 	// if found on the client
