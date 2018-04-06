@@ -17,12 +17,12 @@ func CreateAction(action string) {
 	go DefaultClient.CreateAction(action)
 }
 
-// GetActionSummary retrieves an action summary using the DefaultClient
-func GetActionSummary(action string) (*models.ActionSummary, error) {
+// ActionSummary retrieves an action summary using the DefaultClient
+func ActionSummary(action string) (*models.ActionSummary, error) {
 	return DefaultClient.ActionSummary(action)
 }
 
-// GetActionCount retrieves action stats using the DefaultClient
-func GetActionCount(action, duration string) (int64, error) {
+// ActionCount retrieves action stats using the DefaultClient
+func ActionCount(action, duration string) (int64, error) {
 	return DefaultClient.ActionCount(action, duration)
 }
