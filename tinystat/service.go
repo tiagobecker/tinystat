@@ -43,6 +43,7 @@ func NewService(logger *logrus.Logger, mysqlURL string, maxApps int, cacheExp ti
 	l.Debug("Creating new MySQL Client")
 	db, err := gorm.Open("mysql", mysqlURL)
 	if err != nil {
+		l.WithError(err).Error("Failed to connect to MySQL")
 		return nil, err
 	}
 	db.Set("gorm:table_options", "CHARSET=utf8").AutoMigrate(&Action{})

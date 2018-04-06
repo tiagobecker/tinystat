@@ -47,6 +47,7 @@ func main() {
 	e.POST("/v1/app/:app_id/action/:action/create/:count", s.CreateAction)
 	e.GET("/v1/app/:app_id/action/:action/count", s.ActionSummary)
 	e.GET("/v1/app/:app_id/action/:action/count/:duration", s.ActionCount)
+	e.GET("/v1/stats", s.Stats)
 
 	// Host static demo pages if configured to do so
 	if config.ServeWeb {

@@ -61,6 +61,7 @@ func (s *Service) CreateApp(c echo.Context) error {
 	l.Debug("Verifying the IP hasn't exceeded max Apps")
 	apps, err := s.currentApps(ip)
 	if err != nil {
+		l.WithError(err).Error("Failed to get current apps for IP")
 		return ErrAppCountRetrievalFailure
 	}
 	if apps >= s.maxApps {
