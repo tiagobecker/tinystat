@@ -13,7 +13,6 @@ import (
 
 // baseURL is the baseURL of Tinystat
 const (
-	baseURL              = "https://tinystat.io"
 	actionPostPath       = "/app/%s/action/%s/create/%v"
 	actionSummaryGetPath = "/app/%s/action/%s/count"
 	actionGetPath        = "/app/%s/action/%s/count/%s"
@@ -34,15 +33,17 @@ type Client struct {
 	sync.RWMutex
 	client  *http.Client
 	actions map[string]int64 // action -> count
+	baseURL string           // The base url of the Tinystat server
+	version int              // Will add /v#/ to the path
 	appID   string
 	token   string
 }
 
 // NewClient generates a new standard Client using the passed
 // timeout, sendFreq, appID and token
-func NewClient(appID, token string, timeout, sendFreq time.Duration) *Client {
+func NewClient(appID, token string, baseURL string, version int, timeout, sendFreq time.Duration) *Client {
 	// Generate a new client, apply the APP_ID and TOKEN
-	c := newClient(timeout)
+	c := newClient(baseURL, version, timeout)
 	c.SetAppID(appID)
 	c.SetToken(token)
 
@@ -53,10 +54,12 @@ func NewClient(appID, token string, timeout, sendFreq time.Duration) *Client {
 
 // newClient generates a new basic Tinystat Client using the
 // passed http timeout and send frequency
-func newClient(timeout time.Duration) *Client {
+func newClient(baseURL string, version int, timeout time.Duration) *Client {
 	return &Client{
 		client:  &http.Client{Timeout: timeout},
 		actions: make(map[string]int64),
+		baseURL: baseURL,
+		version: version,
 	}
 }
 
@@ -113,9 +116,12 @@ func (c *Client) do(method, path string, in, out interface{}) error {
 		body = bytes.NewBuffer(jsonBytes)
 	}
 
+	// Generate the full request URL
+	url := fmt.Sprintf("%s/v%v/%s", c.baseURL, c.version, path)
+
 	// Generate the request and append auth headers
 	// if found on the client
-	req, err := http.NewRequest(method, baseURL+path, body)
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return err
 	}
