@@ -45,7 +45,7 @@ func (s *Service) CreateAction(c echo.Context) error {
 	// Decode the request variables
 	appID := c.Param("app_id")
 	action := c.Param("action")
-	count, err := strconv.Atoi(c.QueryParam("count"))
+	count, err := strconv.Atoi(c.Param("count"))
 	if err != nil {
 		return ErrParseCountFailure
 	}
