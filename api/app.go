@@ -43,13 +43,6 @@ func (s *Service) CreateApp(c echo.Context) error {
 	l = l.WithFields(map[string]interface{}{
 		"name": name, "strict_auth": strictAuth})
 
-	// Check rate limit
-	l.Debug("Checking rate limit")
-	if s.rateLimit(c.RealIP()) {
-		l.Error("Rate limit exceeded")
-		return ErrRateLimitExceeded
-	}
-
 	// Generates an AppID UUID and a Token UUID
 	l.Debug("Generating new App UUIDs")
 	appID := newAppID()

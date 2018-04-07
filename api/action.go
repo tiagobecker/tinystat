@@ -16,8 +16,6 @@ import (
 )
 
 var (
-	// ErrInvalidToken is thrown when a request fails to be authenticated
-	ErrInvalidToken = echo.NewHTTPError(http.StatusUnauthorized, "Failed to validate token")
 	// ErrIncrementFailure is thrown when we fail to increment an action
 	ErrIncrementFailure = echo.NewHTTPError(http.StatusInternalServerError, "Failed to increment Action count")
 	// ErrParseCountFailure is thrown when we fail to parse the count
@@ -54,20 +52,6 @@ func (s *Service) CreateAction(c echo.Context) error {
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action, "count": count})
 
-	// Check rate limit
-	l.Debug("Checking rate limit")
-	if s.rateLimit(c.RealIP(), action) {
-		l.Error("Rate limit exceeded")
-		return ErrRateLimitExceeded
-	}
-
-	// Validate the token on the request
-	l.Debug("Validating the passed token")
-	if valid := s.validateToken(appID, true, c); !valid {
-		l.Error("Failed to validate token")
-		return ErrInvalidToken
-	}
-
 	// Store the new action in the database
 	l.Debug("Incrementing Action count in DB")
 	if err := s.incrementAction(appID, action, count); err != nil {
@@ -97,13 +81,6 @@ func (s *Service) ActionCount(c echo.Context) error {
 	duration := c.Param("duration")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action, "duration": duration})
-
-	// Validate the token on the request
-	l.Debug("Validating the passed token")
-	if valid := s.validateToken(appID, false, c); !valid {
-		l.Error("Failed to validate token")
-		return ErrInvalidToken
-	}
 
 	// Parse the duration passed
 	l.Debug("Parsing the requested duration")
@@ -145,13 +122,6 @@ func (s *Service) ActionSummary(c echo.Context) error {
 	action := c.Param("action")
 	l = l.WithFields(map[string]interface{}{
 		"app_id": appID, "action": action})
-
-	// Validate the token on the request
-	l.Debug("Validating the passed token")
-	if valid := s.validateToken(appID, false, c); !valid {
-		l.Error("Failed to validate token")
-		return ErrInvalidToken
-	}
 
 	now := time.Now() // Get the current time for calculating in actionSum
 
