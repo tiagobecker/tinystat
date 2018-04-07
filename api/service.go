@@ -13,6 +13,7 @@ import (
 // Service contains all dependencies needed for the Tinystat service
 type Service struct {
 	logger  *logrus.Entry
+	appID   string // tinystatAppID
 	rateMap *rateMap
 	maxApps int
 	db      *gorm.DB
@@ -26,7 +27,7 @@ type rateMap struct {
 }
 
 // NewService generates a new Service reference and return it
-func NewService(logger *logrus.Logger, mysqlURL string, maxApps int, cacheExp time.Duration) (*Service, error) {
+func NewService(logger *logrus.Logger, tinystatAppID string, mysqlURL string, maxApps int, cacheExp time.Duration) (*Service, error) {
 	l := logger.WithField("module", "new_service")
 
 	// Create the MySQL Client and AutoMigrate tables
@@ -43,6 +44,7 @@ func NewService(logger *logrus.Logger, mysqlURL string, maxApps int, cacheExp ti
 	l.Debug("Returning new service")
 	return &Service{
 		logger:  logger.WithField("service", "tinystat"),
+		appID:   tinystatAppID,
 		rateMap: &rateMap{ipMap: make(map[string]time.Time)},
 		maxApps: maxApps,
 		db:      db,

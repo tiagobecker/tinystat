@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/labstack/echo"
 	"github.com/sdwolfe32/tinystat/client"
@@ -14,9 +13,10 @@ var ErrStatsRetrievalFailure = echo.NewHTTPError(http.StatusInternalServerError,
 
 // Stats is any action that can be stored with a timestamp
 type Stats struct {
-	Apps              int64 `json:"apps"`
-	ActionsRecorded   int64 `json:"actionsRecorded"`
-	CreateActionCalls int64 `json:"createActionCalls"`
+	Apps                int64 `json:"apps"`
+	ActionsRecorded     int64 `json:"actionsRecorded"`
+	CountsCalculated    int64 `json:"countsCalculated"`
+	SummariesCalculated int64 `json:"summariesCalculated"`
 }
 
 // Stats returns the overall stats for Tinystat
@@ -30,11 +30,14 @@ func (s *Service) Stats(c echo.Context) error {
 	var g errgroup.Group
 	var stats Stats
 	g.Go(func() error { return s.db.Model(&App{}).Count(&stats.Apps).Error })
-	g.Go(func() error { return s.actionSum(&stats.ActionsRecorded) })
 	g.Go(func() error {
-		return s.actionSum(&stats.CreateActionCalls,
-			"app_id = ?", os.Getenv("TINYSTAT_APP_ID"),
-			"action = ?", "create-action")
+		return s.actionSum(&stats.ActionsRecorded, "app_id = ?", s.appID, "action = ?", "create-action")
+	})
+	g.Go(func() error {
+		return s.actionSum(&stats.CountsCalculated, "app_id = ?", s.appID, "action = ?", "action-count")
+	})
+	g.Go(func() error {
+		return s.actionSum(&stats.SummariesCalculated, "app_id = ?", s.appID, "action = ?", "action-summary")
 	})
 	if err := g.Wait(); err != nil {
 		l.WithError(err).Error("Failed to retrieve overall stats")

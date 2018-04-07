@@ -30,7 +30,7 @@ func main() {
 
 	// Create the tinystat service
 	l.Info("Generating all Tinystat dependencies")
-	s, err := api.NewService(logger, config.MysqlURL, config.MaxAppsPerIP, time.Hour*24)
+	s, err := api.NewService(logger, config.TinystatAppID, config.MysqlURL, config.MaxAppsPerIP, time.Hour*24)
 	if err != nil {
 		l.WithError(err).Fatalln("Failed to generate Tinystat service")
 	}

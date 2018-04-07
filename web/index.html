@@ -1,13 +1,198 @@
-Tinystat is a SUPER BASIC free to use and Open Source metrics API used for counting user actions on a hourly basis. 
+<!DOCTYPE html>
+<html>
 
-The need for a basic stat tracking system came while I was trying to display database statistics on a few of my personal web app projects.
-The main issue had arisen when I was performing <code>COUNT</code> queries over very large data sets (6Million records).
-The issue was that it would take several minutes to get a number to display to the user which is not acceptable.
-This is even less ideal when it is required to retrieve an accurate record count in real time.
-Rather than reproducing the same sort of polling-caching logic on every API I build I decided to write a service basic service with a single central database that would provide metrics tracking for all my projects in a simple and secure way.
-By recording the total actions per hour (per record) in an actions table, we can easily query and <code>SUM</code> years worth of actions extremely quickly [as there should be no more than 8,760 records].
+<head>
+    <title>Tinystat | Simplistic Metrics and Stat-Tracking</title>
+    <meta charset="utf-8">
 
-There are 3 simple endpoints:
-- The CreateApp endpoint used once to create a new project and define a particular user (or application).
-- The CreateAction endpoint which adds to a stored count for a particular hour
-- The GetActionCount endpoint that recieveds time bounds and returns the number of actions that took place
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-70800349-5"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'UA-70800349-5');
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Patrick+Hand">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.css">
+    <link rel="stylesheet" href="/assets/css/tinystat.css">
+</head>
+
+<body>
+    <div class="mail-pattern">
+        <div class="ui container padded">
+            <div class="ui equal width stackable grid">
+                <div class="column">
+                    <a href="/" class="logo">Tinystat</a>
+                </div>
+                <div class="right aligned column">
+                    <a class="github-button" href="https://github.com/sdwolfe32/tinystat" data-size="large" data-show-count="true" aria-label="Star sdwolfe32/trumail on GitHub">Star</a>
+                </div>
+            </div>
+        </div>
+        <div class="ui container padded-bottom">
+            <div class="masthead">
+                <div class="index-message">
+                    Metrics for the minimalist
+                </div>
+                <a class="ui orange button" href="https://github.com/sdwolfe32/tinystat">
+                    <i class="github icon"></i> Github
+                </a>
+                <a class="ui orange button" href="https://hub.docker.com/r/sdwolfe32/tinystat">
+                    <i class="docker icon"></i> DockerHub
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="ui container padded">
+        <div class="ui centered grid">
+            <div class="ui orange compact segment">
+                <form id="new-app-form">
+                    <div class="ui action input">
+                        <div class="ui action input">
+                            <input id="app-name" placeholder="MyExcitingApp" type="text">
+                        </div>
+                        <div class="ui compact selection dropdown" tabindex="0">
+                            <select id="app-security">
+                                <option value="true">Secure</option>
+                                <option value="false">Insecure</option>
+                            </select>
+                            <i class="dropdown icon"></i>
+                            <div class="text">Secure</div>
+                            <div class="menu" tabindex="-1">
+                                <div class="item active selected" data-value="true">Secure</div>
+                                <div class="item" data-value="false">Insecure</div>
+                            </div>
+                        </div>
+                        <button id="new-app-button" class="ui basic button">Create new app!</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="ui container">
+        <div class="ui container center aligned padded-bottom">
+            Note: Security defines whether or not you would like all requests to have <br/>
+            authentication on them (including stats retrieval). Each IP is limited to 5 total apps.
+            <br/>
+        </div>
+    </div>
+    <div class="ui container padded">
+        <h3>Overall Statistics</h3>
+        <div class="ui three tiny stackable statistics">
+            <div class="ui statistic">
+                <div id="actionsRecorded" class="value"></div>
+                <div class="label">
+                    <i class="pencil alternate icon"></i> Actions Recorded
+                </div>
+            </div>
+            <div class="ui statistic">
+                <div id="countsCalculated" class="value"></div>
+                <div class="label">
+                    <i class="chart bar icon"></i> Counts Calculated
+                </div>
+            </div>
+            <div class="ui statistic">
+                <div id="summariesCalculated" class="value"></div>
+                <div class="label">
+                    <i class="chart pie icon"></i> Summaries Calculated
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui container padded">
+        <h2>
+            <i class="question circle icon"></i> What is it?
+        </h2>
+        <p>
+            Tinystat is a very minimalist, free to use and Open Source metrics API used for recording action counts on a hourly basis.
+            The need for a basic metrics system came while I ran into an issue trying to display database statistics on a
+            few of my personal web-apps. The issue was that querying a
+            <code>COUNT</code> of large datasets (6Million Records) resulted in extremely long response times, often in the minutes.
+            When trying to display real time (almost) statistics in a timely manner, this is not an ideal situation.
+        </p>
+        <p>Rather than reproducing the same sort of polling-then-caching logic or creating a metrics table for every API I build
+            I decided to write a basic shared service with a single central database that would provide metrics tracking
+            for all my projects in a simple and secure way. By storing the total actions per hour in an actions table, we
+            can easily
+            <code>SUM</code> up years worth of actions extremely quickly and provide accurate action statistics in a timely manner.
+        </p>
+    </div>
+    <div class="ui container padded-bottom">
+        <h2>
+            <i class="exchange icon"></i> Endpoints
+        </h2>
+        <p>
+            To keep things simple for right now, Tinystat consists of only a select few endpoints. There is a single reporting endpoint
+            that has a rate-limit of 1RPS. All others are unlimited as of right now.
+        </p>
+        <p>
+            To create a new app:
+            <br/> Optional: To reqiure the app_token on all metrics retrieval (
+            <code>GET</code>) requests, apply a query param as
+            <code>?strict_auth=true</code> (might be desireable for security of applications that only retrieve metrics from their
+            backend).
+            <div class="ui segment">
+                <code>POST https://tinystat.io/v1/app/create/{app_name}</code>
+            </div>
+            To record a new action:
+            <br/> Note: Must be called with the app token either in the query params (as
+            <code>?token={token}</code>) or in the header as
+            <code>TOKEN={token}</code>
+            <div class="ui segment">
+                <code>POST https://tinystat.io/v1/app/{app_id}/action/{action_name}/create/{count}</code>
+            </div>
+            To retreive a count summary:
+            <div class="ui segment">
+                <code>GET https://tinystat.io/v1/app/{app_id}/action/{action_name}/count</code>
+            </div>
+            To retreive a count after a specified point in time:
+            <div class="ui segment">
+                <code>GET https://tinystat.io/v1/app/{app_id}/action/{action_name}/count/{duration}</code>
+            </div>
+        </p>
+    </div>
+    <div class="ui container padded-bottom">
+        <div class="ui grid middle aligned stackable">
+            <div class="seven wide column">
+                <h3>Check out my other work!</h3>
+            </div>
+            <div class="nine wide right aligned column">
+                <a class="tiny ui orange button" href="https://swolfe.me">
+                    <i class="terminal icon"></i> My Website
+                </a>
+                <a class="tiny ui orange button" href="https://linkedin.com/in/sdwolfe32">
+                    <i class="linkedin icon"></i> LinkedIn
+                </a>
+                <a class="tiny ui orange button" href="https://github.com/sdwolfe32">
+                    <i class="github icon"></i> Github
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="ui container padded">
+        <div class="ui middle aligned grid stackable">
+            <div class="thirteen wide column">
+                This web site and all documentation is licensed under
+                <a href="https://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a>.
+                <i class="copyright icon"></i>Copyright 2018,
+                <a href="https://swolfe.me/">Steven Wolfe</a>. All Rights Reserved
+            </div>
+            <div class="three wide column">
+                <a href="/" class="logo">Tinystat</a>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/1.9.3/countUp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.js"></script>
+    <script src="https://buttons.github.io/buttons.js"></script>
+    <script src="/assets/js/tinystat.js"></script>
+</body>
+
+</html>

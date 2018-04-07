@@ -1,0 +1,67 @@
+html,
+body {
+    background-color: #f1f1f1;
+    color: #1b1111;
+    line-height: 1.6;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    height: 100%;
+}
+
+h1 {
+    color: #1f2128;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 600;
+    font-size: 35px;
+}
+
+h2 {
+    color: #1f2128;
+    padding-bottom: 10px;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 600;
+    font-size: 32px;
+}
+
+h3 {
+    color: #1f2128;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 300;
+    font-size: 25px;
+}
+
+p {
+    line-height: 1.7;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.ui.container {
+    width: 750px;
+}
+
+.masthead {
+    color: #1b1111;
+    padding: 85px 0;
+}
+
+a.logo {
+    font-family: 'Patrick Hand';
+    font-weight: bold;
+    color: #f2711c;
+    font-size: 35px;
+}
+
+.index-message {
+    font-weight: 300;
+    font-size: 30px;
+    padding-bottom: 20px;
+}
+
+.padded {
+    padding: 40px 0;
+}
+
+.padded-bottom {
+    padding-bottom: 40px;
+}
