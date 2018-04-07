@@ -45,6 +45,14 @@ p {
     padding: 85px 0;
 }
 
+a {
+    color: #f2711c;
+}
+
+a:hover {
+    color: #ebab81;
+}
+
 a.logo {
     font-family: 'Patrick Hand';
     font-weight: bold;
