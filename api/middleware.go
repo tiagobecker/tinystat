@@ -33,6 +33,7 @@ func (s *Service) TokenAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		if token == "" {
 			token = c.Request().Header.Get("TOKEN")
 		}
+		l = l.WithFields(map[string]interface{}{"app_id": appID, "token": token})
 
 		// Check the cache for a stored app/token and validate
 		l.Debug("Checking cache for App")
