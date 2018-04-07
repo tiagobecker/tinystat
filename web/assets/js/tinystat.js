@@ -1,11 +1,14 @@
 $('.ui.dropdown').dropdown();
 
+var oldStats = {};
+
 function pollStats() {
-    $.getJSON('/v1/stats', function (data) {
+    $.getJSON('/v1/stats', function (newStats) {
         // Set all countups
-        countup('actionsRecorded', data.actionsRecorded);
-        countup('countsCalculated', data.countsCalculated);
-        countup('summariesCalculated', data.summariesCalculated);
+        countup('actionsRecorded', oldStats.actionsRecorded, newStats.actionsRecorded);
+        countup('countsCalculated', oldStats.countsCalculated, newStats.countsCalculated);
+        countup('summariesCalculated', oldStats.summariesCalculated, newStats.summariesCalculated);
+        oldStats = newStats;
 
         // Perform this action every 10 seconds
         setTimeout(pollStats, 10000); // Poll stats every 10 seconds and re-apply to UI
@@ -13,12 +16,10 @@ function pollStats() {
 }
 
 // countup animates the passed id with a new counted up value
-function countup(id, to, prefix, suffix) {
-    var from = $('#' + id).text(); // Retrieve the starting value
-    from = from.trim(); // Trim any whitespace
-    from = from.replace(/,/g, ''); // Remove all commas
-    if (from == '' || from > to) {
-        from = to;
+function countup(id, from, to, prefix, suffix) {
+    // if from isn't set yet, set it to the initial to value
+    if (from == undefined) {
+        from = to
     }
 
     // Configure countup options
