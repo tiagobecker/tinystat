@@ -83,6 +83,11 @@ func (c *Client) sendWorker(sendFreq time.Duration) {
 		c.Lock()
 		// Create an action for every count
 		for action, count := range c.actions {
+			// Ignore actions with a count of 0
+			if c.actions[action] == 0 {
+				continue
+			}
+
 			// Perform the request
 			if err := c.post(fmt.Sprintf(actionPostPath, c.appID, action, count), nil, nil); err != nil {
 				continue
