@@ -84,7 +84,7 @@ func (s *Service) CreateApp(c echo.Context) error {
 	s.cache.SetDefault(appID, newApp)
 
 	// Report the successful create-app to ourselves
-	client.CreateAction("create-app")
+	go client.CreateAction("create-app")
 
 	// Return the newly generated App
 	l.Debug("Returning newly generated/stored App")

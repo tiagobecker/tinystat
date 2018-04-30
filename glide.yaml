@@ -1,17 +1,1 @@
 package: github.com/sdwolfe32/tinystat
-import:
-- package: github.com/heroku/x
-  subpackages:
-  - hmetrics/onload
-- package: github.com/jinzhu/gorm
-  subpackages:
-  - dialects/mysql
-- package: github.com/labstack/echo
-  subpackages:
-  - middleware
-- package: github.com/patrickmn/go-cache
-- package: github.com/satori/go.uuid
-- package: github.com/sirupsen/logrus
-- package: golang.org/x/sync
-  subpackages:
-  - errgroup

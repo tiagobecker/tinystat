@@ -60,7 +60,7 @@ func (s *Service) CreateAction(c echo.Context) error {
 	}
 
 	// Report the successful create-action to ourselves
-	client.CreateAction("create-action")
+	go client.CreateAction("create-action")
 
 	// Return a Status OK
 	l.Debug("Returning successful CreateAction response")
@@ -102,7 +102,7 @@ func (s *Service) ActionCount(c echo.Context) error {
 	}
 
 	// Report the successful create-action to ourselves
-	client.CreateAction("action-count")
+	go client.CreateAction("action-count")
 
 	// Return an Status OK
 	l.Debug("Returning successful ActionCount response")
@@ -139,7 +139,7 @@ func (s *Service) ActionSummary(c echo.Context) error {
 	}
 
 	// Report the successful get-action-summary to ourselves
-	client.CreateAction("action-summary")
+	go client.CreateAction("action-summary")
 
 	// Return an Status OK
 	l.Debug("Returning successful ActionSummary response")

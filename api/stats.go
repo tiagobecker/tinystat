@@ -45,7 +45,7 @@ func (s *Service) Stats(c echo.Context) error {
 	}
 
 	// Report the successful get-stats to ourselves
-	client.CreateAction("stats")
+	go client.CreateAction("stats")
 
 	// Return a Status OK
 	l.Debug("Returning successful Stats response")

@@ -1,27 +1,27 @@
-hash: 53f80ab7c71a23d1bdb566ad1b4144a4f2eedeca643f6a744724dbc40a5170f5
-updated: 2018-04-07T13:20:41.60883-07:00
+hash: 1adfe1f86ba48c73fdea7a2370594da7c99cdb730f1da4b823156dd87a272d73
+updated: 2018-04-29T22:40:02.37799-07:00
 imports:
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/go-sql-driver/mysql
-  version: 1a676ac6e4dce68e9303a1800773861350374a9e
+  version: 3287d94d4c6a48a63e16fffaabf27ab20203af2a
 - name: github.com/heroku/x
-  version: a4225bbbfc8a517c9a95251aec1a8189443673b1
+  version: e027b57be83570b92aeefcdad710e38695d5999b
   subpackages:
   - hmetrics
   - hmetrics/onload
 - name: github.com/jinzhu/gorm
-  version: 52c5c8127cf4aeffde3e0aa9222640832075a90f
+  version: 6842b49a1ad0feb6b93be830fe63a682cf853ada
   subpackages:
   - dialects/mysql
 - name: github.com/jinzhu/inflection
   version: 04140366298a54a039076d798123ffa108fff46c
 - name: github.com/labstack/echo
-  version: 37f1a470efa8abb7e89ad221cb4b1cc36f7047bb
+  version: f867058e3ba4fa4504e3ca976b31012db3ce1555
   subpackages:
   - middleware
 - name: github.com/labstack/gommon
-  version: 3bc2d333a4c30531c47051369043bcabd62ff4c0
+  version: 588f4e8bddc6cb45c27b448e925c7fd6a5545434
   subpackages:
   - bytes
   - color
@@ -42,13 +42,13 @@ imports:
 - name: github.com/valyala/fasttemplate
   version: dcecefd839c4193db0d35b88ec65b4c12d360ab0
 - name: golang.org/x/crypto
-  version: b2aa35443fbc700ab74c586ae79b81c171851023
+  version: b49d69b5da943f7ef3c9cf91c8777c1f78a0cc3c
   subpackages:
   - acme
   - acme/autocert
   - ssh/terminal
 - name: golang.org/x/net
-  version: 61147c48b25b599e5b561d2e9c4f3e1ef489ca41
+  version: 5f9ae10d9af5b1c89ae6904293b14b064d4ada23
   subpackages:
   - context
 - name: golang.org/x/sync
@@ -56,12 +56,12 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 3b87a42e500a6dc65dae1a55d0b641295971163e
+  version: cbbc999da32df943dac6cd71eb3ee39e1d7838b9
   subpackages:
   - unix
   - windows
 - name: google.golang.org/appengine
-  version: 0a24098c0ec68416ec050f567f75df563d6b231e
+  version: 962cbd1200af94a5a35ba8d512e9f91271b4d01a
   subpackages:
   - cloudsql
 testImports: []
