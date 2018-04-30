@@ -13,8 +13,8 @@ var DefaultClient = NewClient(os.Getenv("TINYSTAT_APP_ID"), os.Getenv("TINYSTAT_
 	"https://tinystat.io", 1, time.Second*5, time.Second*10)
 
 // CreateAction creates a new action using the DefaultClient
-func CreateAction(action string) {
-	go DefaultClient.CreateAction(action)
+func CreateAction(action string) error {
+	return DefaultClient.CreateAction(action)
 }
 
 // ActionSummary retrieves an action summary using the DefaultClient
